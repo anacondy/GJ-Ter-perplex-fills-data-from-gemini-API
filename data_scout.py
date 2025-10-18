@@ -5,7 +5,7 @@ import json
 import time
 import difflib
 
-API_KEY = "AIzaSyDx5BzjMTff0pHzJAZVDYQE-I9j5RSz3Z8"
+API_KEY = "KEY HERE"
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel(
     'gemini-2.5-pro',
