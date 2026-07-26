@@ -201,3 +201,55 @@ class TestDebugSafety:
 
         with pytest.raises(SystemExit):
             web.main(["--debug", "--host", "0.0.0.0"])
+
+
+class TestWindowsConsole:
+    """Regression tests for legacy Windows code pages.
+
+    Git Bash and older PowerShell consoles default to cp1252, which cannot
+    encode the rupee sign or an arrow. Printing one raised UnicodeEncodeError
+    and killed the process, so `python app.py` and `gjter export` both crashed
+    on a stock Windows setup.
+    """
+
+    def test_transliterates_when_console_is_cp1252(self):
+        import io
+
+        from gjter.console import safe
+
+        stream = io.TextIOWrapper(io.BytesIO(), encoding="cp1252")
+        assert safe("\u20b956,100", stream=stream) == "Rs.56,100"
+        assert safe("GJ Terminal \u2192 http://x", stream=stream).endswith(
+            "-> http://x"
+        )
+
+    def test_passes_through_on_utf8(self):
+        import io
+
+        from gjter.console import safe
+
+        stream = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+        assert safe("\u20b956,100", stream=stream) == "\u20b956,100"
+
+    def test_emit_never_raises(self, monkeypatch, capsys):
+        from gjter.console import emit
+
+        emit("\u20b988,635 \u2192 ok")
+        assert "88,635" in capsys.readouterr().out
+
+    def test_export_survives_cp1252(self, populated_db):
+        """`gjter export` printed raw rupee signs and died on Windows."""
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "-m", "gjter", "--db", str(populated_db), "export"],
+            capture_output=True,
+            env={
+                "PATH": __import__("os").environ.get("PATH", ""),
+                "PYTHONIOENCODING": "cp1252",
+                "PYTHONPATH": str(__import__("pathlib").Path.cwd()),
+            },
+        )
+        assert result.returncode == 0, result.stderr.decode(errors="replace")
+        assert b"UnicodeEncodeError" not in result.stderr

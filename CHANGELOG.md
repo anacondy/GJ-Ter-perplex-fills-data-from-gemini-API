@@ -3,6 +3,28 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] — 2026-07-27
+
+### Fixed
+
+- **`UnicodeEncodeError` crashed the app on Windows.** Git Bash and older
+  PowerShell consoles default to cp1252, which cannot encode `₹` or `→`.
+  `python app.py` died on its startup banner and `gjter export` died on the
+  first salary field. Added `gjter/console.py`, which switches the console to
+  UTF-8 and transliterates (`₹`→`Rs.`) where it cannot. Regression tests
+  simulate a cp1252 stream.
+- `scripts/run_dashboard.sh` continued after a failed `pip install`, producing a
+  confusing downstream error. It now stops and explains the fix, with specific
+  guidance for externally-managed Python environments.
+
+### Added
+
+- **`scripts/run_dashboard.sh`** — one command to install Flask, build the
+  database, verify it and serve the UI. Works in Git Bash on Windows.
+- **`docs/RUNNING.md`** — step-by-step run instructions and a troubleshooting
+  section covering port conflicts, missing Flask, empty tables and the
+  UTF-16 paste error Git Bash reports as `$'\377\376[': command not found`.
+
 ## [1.1.0] — 2026-07-27
 
 Frontend release. The dashboard templates were supplied after 1.0.0 and had

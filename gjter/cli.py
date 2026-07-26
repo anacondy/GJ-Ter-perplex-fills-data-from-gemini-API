@@ -15,6 +15,8 @@ from pathlib import Path
 
 from . import __version__, db
 from .config import DEFAULT_DB_PATH, ConfigError, Settings, settings_from_env
+from .console import emit as _console_emit
+from .console import enable_utf8
 from .providers import ProviderError, get_provider
 
 
@@ -27,7 +29,8 @@ def _configure_logging(verbose: bool) -> None:
 
 
 def _emit(message: str) -> None:
-    print(message, flush=True)
+    """Print progress, tolerating consoles that cannot encode UTF-8."""
+    _console_emit(message)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -309,6 +312,9 @@ def cmd_verify(args, settings: Settings) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Windows consoles default to a legacy code page that cannot encode the
+    # rupee sign, so do this before any output is produced.
+    enable_utf8()
     parser = build_parser()
     args = parser.parse_args(argv)
     _configure_logging(args.verbose)

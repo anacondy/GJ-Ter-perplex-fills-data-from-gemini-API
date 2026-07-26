@@ -27,10 +27,29 @@ That produces a complete, verifiable database using only the standard library.
 
 ### Launch the dashboard
 
+The work is on a branch, so fetch it first:
+
 ```bash
-pip install -e ".[web]"
+git fetch origin
+git checkout arena/019f9ffb-gj-ter-perplex-fills-data-from
+```
+
+Then, one command:
+
+```bash
+./scripts/run_dashboard.sh        # installs Flask, builds the DB, serves it
+```
+
+Or step by step:
+
+```bash
+pip install flask
+python database_setup.py
+python data_scout.py --offline
 python app.py                     # http://127.0.0.1:5000
 ```
+
+Full walkthrough and troubleshooting: [`docs/RUNNING.md`](docs/RUNNING.md).
 
 The **GJ Terminal** dashboard: a sortable, searchable table of every post, with
 a detail page per exam. `Ctrl+K` to search, arrow keys to scroll, click any row
@@ -136,9 +155,10 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 │   └── details.html           # per-exam card grid
 │
 ├── scripts/
+│   ├── run_dashboard.sh            # one-command setup and launch
 │   └── purge_key_from_history.sh   # remove the leaked key from git history
 │
-├── tests/                     # 157 tests
+├── tests/                     # 161 tests
 │   ├── test_matching.py
 │   ├── test_validation.py
 │   ├── test_db.py
@@ -148,6 +168,7 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 │   └── test_config_and_cli.py
 │
 ├── docs/
+│   ├── RUNNING.md             # how to run it, and troubleshooting
 │   ├── ARCHITECTURE.md
 │   ├── SCHEMA.md
 │   └── DATA_SOURCES.md
@@ -168,7 +189,7 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                 # 157 tests, no network required
+pytest                 # 161 tests, no network required
 ruff check gjter tests
 ```
 

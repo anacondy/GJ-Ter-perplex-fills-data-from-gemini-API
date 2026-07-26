@@ -41,6 +41,9 @@ except ImportError:  # pragma: no cover - dependency guidance
 
 from gjter import db
 from gjter.config import UNKNOWN, settings_from_env
+from gjter.console import emit as console_emit
+from gjter.console import enable_utf8
+from gjter.console import safe as console_safe
 
 log = logging.getLogger("gjter.web")
 
@@ -246,6 +249,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args(argv)
 
+    # A Windows console using cp1252 cannot encode the arrow below.
+    enable_utf8()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     # The debug console offers arbitrary code execution to anyone who can reach
@@ -265,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
 
-    print(f"GJ Terminal → http://{args.host}:{args.port}")
+    console_emit(console_safe(f"GJ Terminal \u2192 http://{args.host}:{args.port}"))
     app.run(host=args.host, port=args.port, debug=args.debug)
     return 0
 
