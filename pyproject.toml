@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gjter"
+version = "1.1.0"
+description = "Build and enrich a sourced SQLite database of Indian government recruitment exams."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Anuj Meena" }]
+keywords = ["sqlite", "gemini", "government-exams", "india", "data-pipeline"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Database",
+]
+# The core pipeline has zero runtime dependencies: it runs offline on the
+# standard library alone. The Gemini SDK is an optional extra.
+dependencies = []
+
+[project.optional-dependencies]
+gemini = ["google-genai>=1.0.0"]
+web = ["flask>=3.0"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4", "flask>=3.0"]
+
+[project.scripts]
+gjter = "gjter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/anacondy/GJ-Ter-perplex-fills-data-from-gemini-API"
+Issues = "https://github.com/anacondy/GJ-Ter-perplex-fills-data-from-gemini-API/issues"
+
+[tool.setuptools.packages.find]
+include = ["gjter*"]
+
+[tool.setuptools.package-data]
+gjter = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 90
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S"]
+ignore = [
+  "S101",  # assert - expected in tests
+  # SQL is built from module-level constants only, never from user input.
+  # Every value is parameter-bound; identifiers cannot be attacker-controlled.
+  "S608",
+  # Flags variable names containing "KEY"/"PASSWORD". Here they are the
+  # placeholder-rejection list in config.py - the opposite of a hardcoded secret.
+  "S105",
+  # random.uniform() is used for retry jitter, which needs no cryptographic
+  # strength.
+  "S311",
+  # Provider.close() is an intentionally optional no-op hook, not an abstract
+  # method: most providers hold nothing to release.
+  "B027",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "E501"]
+# Seed and curated data are prose strings (eligibility rules, pay scales) that
+# read worse when wrapped than when left long.
+"gjter/seed.py" = ["E501"]

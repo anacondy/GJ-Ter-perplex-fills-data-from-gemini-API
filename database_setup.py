@@ -1,101 +1,36 @@
-# database_setup.py
-# FINAL version with robust job detail structure and matching columns!
+#!/usr/bin/env python3
+"""Create or migrate ``jobs.db`` and insert the base job rows.
 
-import sqlite3
-import os
+Backwards-compatible entry point. Running it with no arguments does what it
+always did - leaves you with a ready-to-use ``jobs.db`` - but it is now
+**non-destructive**: the schema is migrated in place and the seed rows are
+upserted, so running it twice no longer wipes enriched data.
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'jobs.db')
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
+    python database_setup.py                 # create or migrate, then seed
+    python database_setup.py --force-reset   # the old destructive behaviour
+    python database_setup.py --no-seed       # schema only
 
-# --- Drop all tables to ensure a clean start ---
-cursor.execute('DROP TABLE IF EXISTS job_specs')
-cursor.execute('DROP TABLE IF EXISTS exam_pattern')
-cursor.execute('DROP TABLE IF EXISTS job_cutoffs')
-cursor.execute('DROP TABLE IF EXISTS jobs')
+The old version executed ``DROP TABLE`` at import time, which meant simply
+importing this module destroyed the database.
+"""
 
-# --- Recreate jobs table with all columns for display and AI integration ---
-cursor.execute('''
-CREATE TABLE jobs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    post_name TEXT,
-    exam_name TEXT,
-    conducting_body TEXT,
-    "group" TEXT,
-    gazetted_status TEXT,
-    pay_level INTEGER,
-    salary TEXT,
-    eligibility TEXT,
-    age_limit TEXT,
-    pet_status TEXT,
-    application_start TEXT,
-    application_end TEXT,
-    exam_date TEXT,
-    official_website TEXT
-);
-''')
+from __future__ import annotations
 
-# --- Related detail tables for AI population ---
-cursor.execute('''
-CREATE TABLE job_specs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    job_id INTEGER,
-    nationality TEXT,
-    age_limits TEXT,
-    age_relax TEXT,
-    edu_qual TEXT,
-    attempts TEXT,
-    physical_std TEXT,
-    FOREIGN KEY(job_id) REFERENCES jobs(id)
-);
-''')
+import sys
 
-cursor.execute('''
-CREATE TABLE exam_pattern (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    job_id INTEGER,
-    stages TEXT,
-    num_papers TEXT,
-    q_type TEXT,
-    duration TEXT,
-    marking_scheme TEXT,
-    FOREIGN KEY(job_id) REFERENCES jobs(id)
-);
-''')
+from gjter.cli import main
 
-cursor.execute('''
-CREATE TABLE job_cutoffs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    job_id INTEGER,
-    category TEXT,
-    score TEXT,
-    year TEXT,
-    FOREIGN KEY(job_id) REFERENCES jobs(id)
-);
-''')
-
-# --- 12 Base Jobs, Gemini will fill missing fields ---
-jobs_data = [
-    ('IAS Officer', 'UPSC CSE', 'UPSC', 'A', 'Gazetted', 10, '₹56,100+', 'Any Graduation', '21-32', 'No PET', None, None, None, None),
-    ('IPS Officer', 'UPSC CSE', 'UPSC', 'A', 'Gazetted', 10, '₹56,100+', 'Any Graduation', '21-32', 'PET Required', None, None, None, None),
-    ('IFS Officer', 'UPSC CSE', 'UPSC', 'A', 'Gazetted', 10, '₹60,000+', 'Any Graduation', '21-32', 'No PET', None, None, None, None),
-    ('RBI Grade B', 'RBI Grade B Exam', 'RBI', 'A', 'Gazetted', 10, '₹70,000+', 'Graduation (50%+)', '21-30', 'No PET', None, None, None, None),
-    ('SBI PO', 'SBI PO Exam', 'SBI', 'A', 'Gazetted', 7, '₹40,000+', 'Any Graduation', '21-30', 'No PET', None, None, None, None),
-    ('IBPS PO', 'IBPS PO Exam', 'IBPS', 'A', 'Gazetted', 7, '₹35,000+', 'Any Graduation', '20-30', 'No PET', None, None, None, None),
-    ('SSC CGL (AAO)', 'SSC CGL', 'SSC', 'B', 'Non-Gazetted', 8, '₹45,000+', 'Any Graduation', '18-32', 'No PET', None, None, None, None),
-    ('NDA Officer', 'NDA Exam', 'UPSC', 'A', 'Gazetted', 10, '₹56,100+', '10+2 (PCM)', '16.5-19.5', 'PET Required', None, None, None, None),
-    ('ISRO Scientist', 'ISRO ICRB', 'ISRO', 'A', 'Gazetted', 10, '₹60,000+', 'B.Tech/B.E (60%+)', '21-35', 'No PET', None, None, None, None),
-    ('DRDO Scientist', 'DRDO Entry Test', 'DRDO', 'A', 'Gazetted', 10, '₹60,000+', 'B.Tech/B.E (First Class)', '21-28', 'No PET', None, None, None, None),
-    ('Railway Group A', 'UPSC ESE', 'UPSC', 'A', 'Gazetted', 10, '₹56,100+', 'B.Tech/B.E', '21-30', 'No PET', None, None, None, None),
-    ('LIC AAO', 'LIC AAO Exam', 'LIC', 'B', 'Non-Gazetted', 8, '₹40,000+', 'Any Graduation', '21-30', 'No PET', None, None, None, None)
-]
-cursor.executemany(
-    '''INSERT INTO jobs VALUES 
-    (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-    jobs_data
-)
-
-conn.commit()
-conn.close()
-print("✅ Database 'jobs.db' has been successfully built with all necessary columns! 🚀")
+if __name__ == "__main__":
+    argv = sys.argv[1:]
+    # Forward global flags that must precede the subcommand.
+    leading: list[str] = []
+    rest: list[str] = []
+    iterator = iter(argv)
+    for token in iterator:
+        if token in {"--db", "-v", "--verbose"}:
+            leading.append(token)
+            if token == "--db":
+                leading.append(next(iterator, ""))
+        else:
+            rest.append(token)
+    raise SystemExit(main([*leading, "init", *rest]))

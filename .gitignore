@@ -1,0 +1,43 @@
+# Secrets - never commit these
+.env
+.env.*
+!.env.example
+*.key
+credentials.json
+service-account*.json
+
+# Database artefacts (regenerate with `python database_setup.py`)
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Generated exports
+exports/
+*.export.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

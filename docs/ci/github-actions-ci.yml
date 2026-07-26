@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,web]"
+
+      - name: Lint
+        run: ruff check gjter tests
+        continue-on-error: true
+
+      - name: Test
+        run: pytest -q
+
+      - name: End-to-end smoke test (offline, no API key)
+        run: |
+          python database_setup.py
+          python data_scout.py --offline
+          python -m gjter verify
+          python -m gjter status
+
+      - name: Dashboard smoke test
+        run: |
+          python - <<'PY'
+          import os
+          os.environ["GJTER_DB_PATH"] = "jobs.db"
+          import app as web
+          web.app.config.update(TESTING=True)
+          client = web.app.test_client()
+          for path, expected in [("/", 200), ("/details/1", 200),
+                                 ("/update_status", 200), ("/healthz", 200),
+                                 ("/details/99999", 404)]:
+              got = client.get(path).status_code
+              assert got == expected, f"{path}: expected {expected}, got {got}"
+          body = client.get("/details/1").get_data(as_text=True)
+          assert "Details not available." not in body, "fee card empty"
+          assert "92.66" in body, "cutoffs missing"
+          print("dashboard OK")
+          PY
+
+      - name: Check rendered dashboard JavaScript parses
+        run: |
+          python - <<'PY'
+          import os, re
+          os.environ["GJTER_DB_PATH"] = "jobs.db"
+          import app as web
+          web.app.config.update(TESTING=True)
+          html = web.app.test_client().get("/").get_data(as_text=True)
+          js = re.search(r"<script>(.*?)</script>", html, re.S).group(1)
+          open("/tmp/rendered.js", "w").write(js)
+          PY
+          node --check /tmp/rendered.js
+          echo "rendered JS parses"
+
+      - name: Fail if templates lost their rel=noopener
+        run: |
+          if grep -q 'target="_blank"' templates/details.html && \
+             ! grep -q 'rel="noopener noreferrer"' templates/details.html; then
+            echo "::error::target=_blank without rel=noopener"
+            exit 1
+          fi
+
+      - name: Fail if a database was committed
+        run: |
+          if git ls-files --error-unmatch jobs.db 2>/dev/null; then
+            echo "jobs.db must not be committed; it is a build artefact."
+            exit 1
+          fi
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for hardcoded Google API keys
+        run: |
+          if git grep -nE 'AIza[0-9A-Za-z_-]{35}' -- . ':!*.md'; then
+            echo "::error::A Google API key literal is present in the working tree."
+            exit 1
+          fi
+          echo "No API key literals in the working tree."

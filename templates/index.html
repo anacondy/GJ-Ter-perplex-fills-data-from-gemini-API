@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GJ Terminal - Government Jobs Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&display=swap');
+
+        /* Global Styles & Dark Mode */
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #0d0d0f;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 2rem 3rem;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Header & Title */
+        .main-header { text-align: center; margin-bottom: 2rem; }
+        .main-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Responsive Table Container */
+        .table-container {
+             overflow-x: auto; /* Enables horizontal scrolling */
+             scroll-behavior: smooth;
+             border: 1px solid rgba(255, 255, 255, 0.1);
+             border-radius: 12px;
+             background: rgba(255, 255, 255, 0.03);
+             padding: 8px;
+             -ms-overflow-style: none; scrollbar-width: none; /* Hide scrollbar */
+        }
+        .table-container::-webkit-scrollbar { display: none; }
+
+        /* Table Styling */
+        .jobs-table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+        .jobs-table thead { position: sticky; top: 0; z-index: 10; }
+        .jobs-table thead th {
+            background: rgba(13, 13, 15, 0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .jobs-table th, .jobs-table td {
+            padding: 14px 15px;
+            white-space: nowrap;
+            text-align: left; font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .jobs-table tr:last-child td { border-bottom: none; }
+        .jobs-table tbody tr { transition: background-color 0.2s ease; }
+        .jobs-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.05); cursor: pointer; }
+
+        /* Sorting Indicators */
+        .jobs-table th.sortable { cursor: pointer; transition: color 0.2s ease; }
+        .jobs-table th.sortable:hover { color: #fff; }
+        .jobs-table th.sortable::after { content: ' '; display: inline-block; margin-left: 8px; opacity: 0.5; }
+        .jobs-table th.sort-asc::after { content: '▲'; opacity: 1; }
+        .jobs-table th.sort-desc::after { content: '▼'; opacity: 1; }
+
+        /* Search Overlay */
+        .search-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: flex-start; padding-top: 15vh; z-index: 2000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+        .search-overlay.visible { opacity: 1; visibility: visible; }
+        .search-overlay.visible .search-modal { transform: scale(1); }
+        .search-modal { width: 100%; max-width: 700px; transform: scale(0.95); transition: transform 0.3s ease; }
+        #searchInput { width: 100%; padding: 18px 24px; font-size: 1.2rem; font-family: 'Manrope', sans-serif; background-color: #1e1e1e; color: #e0e0e0; border: 1px solid #444; border-radius: 10px; outline: none; box-sizing: border-box; }
+        #searchInput:focus { border-color: #FFD700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); }
+
+        /* Flickering Dot Animation */
+        .update-indicator {
+            display: inline-block; width: 10px; height: 10px;
+            background-color: #2ecc71; border-radius: 50%;
+            margin-left: 10px; vertical-align: middle;
+            animation: flicker 1.5s infinite ease-in-out;
+        }
+        @keyframes flicker { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
+
+        /* Mobile Adjustments (16:9 / 20:9) */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .main-header h1 { font-size: 1.8rem; }
+            /* Table container handles scrolling automatically via overflow-x */
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <h1>
+            GJ Terminal
+            <span id="update-indicator-container">
+                {% if is_updating %}
+                <span class="update-indicator"></span>
+                {% endif %}
+            </span>
+        </h1>
+    </header>
+
+    <div class="table-container" id="tableContainer">
+        <table class="jobs-table" id="jobsTable">
+            <thead>
+                <tr>
+                    <th class="sortable" data-column-index="0">Post Name</th>
+                    <th class="sortable" data-column-index="1">Exam Name</th>
+                    <th class="sortable" data-column-index="2">Conducting Body</th>
+                    <th class="sortable" data-column-index="3">Group</th>
+                    <th class="sortable" data-column-index="4">Gazetted Status</th>
+                    <th class="sortable" data-column-index="5" data-sort-type="number">Pay Level</th>
+                    <th class="sortable" data-column-index="6" data-sort-type="currency">Salary (Approx.)</th>
+                    <th class="sortable" data-column-index="7">Eligibility</th>
+                    <th class="sortable" data-column-index="8" data-sort-type="number">Age Limit</th>
+                    <th class="sortable" data-column-index="9">PET Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                <tr data-id="{{ job.id }}">
+                    <td>{{ job.post_name or 'N/A' }}</td>
+                    <td>{{ job.exam_name or 'N/A' }}</td>
+                    <td>{{ job.conducting_body or 'N/A' }}</td>
+                    <td>{{ job.group or 'N/A' }}</td>
+                    <td>{{ job.gazetted_status or 'N/A' }}</td>
+                    <td>{{ job.pay_level or 'N/A' }}</td>
+                    <td>{{ job.salary or 'N/A' }}</td>
+                    <td>{{ job.eligibility or 'N/A' }}</td>
+                    <td>{{ job.age_limit or 'N/A' }}</td>
+                    <td>{{ job.pet_status or 'N/A' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" style="text-align: center; color: #888; padding: 2rem;">No job data found. Run database_setup.py.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-modal">
+            <input type="text" id="searchInput" placeholder="Search through posts...">
+        </div>
+    </div>
+
+    <script>
+        const tableContainer = document.getElementById('tableContainer');
+        const searchOverlay = document.getElementById('searchOverlay');
+        const searchInput = document.getElementById('searchInput');
+        const jobsTable = document.getElementById('jobsTable');
+        const indicatorContainer = document.getElementById('update-indicator-container');
+        let wasUpdating = {{ is_updating | lower }};
+
+        // --- Interaction Logic (Shortcuts, Click, Sort, Search, Status) ---
+        document.addEventListener('keydown', (event) => {
+            if (!searchOverlay.classList.contains('visible')) {
+                const scrollAmount = 250;
+                if (event.key === 'ArrowLeft') { event.preventDefault(); tableContainer.scrollBy({ left: -scrollAmount, behavior: 'smooth' }); }
+                if (event.key === 'ArrowRight') { event.preventDefault(); tableContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' }); }
+                if (event.key === 'ArrowUp') { event.preventDefault(); window.scrollBy({ top: -150, behavior: 'smooth' }); }
+                if (event.key === 'ArrowDown') { event.preventDefault(); window.scrollBy({ top: 150, behavior: 'smooth' }); }
+            }
+            if (event.ctrlKey && (event.key === 'k' || event.key === 'K')) {
+                event.preventDefault(); searchOverlay.classList.add('visible'); searchInput.focus();
+            }
+            if (event.key === 'Escape' && searchOverlay.classList.contains('visible')) {
+                searchOverlay.classList.remove('visible');
+            }
+        });
+
+        jobsTable.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                const jobId = row.dataset.id;
+                if (jobId) { window.location.href = '/details/' + jobId; }
+            });
+        });
+
+        jobsTable.querySelectorAll('th.sortable').forEach(headerCell => {
+            headerCell.addEventListener('click', () => {
+                const headerIndex = parseInt(headerCell.dataset.columnIndex);
+                const sortType = headerCell.dataset.sortType || 'alpha';
+                const currentIsAscending = headerCell.classList.contains('sort-asc');
+                sortTableByColumn(jobsTable, headerIndex, !currentIsAscending, sortType);
+            });
+        });
+
+        function sortTableByColumn(table, columnIndex, ascending = true, sortType) {
+            const directionModifier = ascending ? 1 : -1;
+            const tBody = table.tBodies[0];
+            const rows = Array.from(tBody.querySelectorAll('tr'));
+
+            const sortedRows = rows.sort((a, b) => {
+                const aCell = a.querySelector(`td:nth-child(${columnIndex + 1})`);
+                const bCell = b.querySelector(`td:nth-child(${columnIndex + 1})`);
+                if (!aCell || !bCell) { return 0; }
+                const aColText = aCell.textContent.trim();
+                const bColText = bCell.textContent.trim();
+
+                if (sortType === 'number' || sortType === 'currency') {
+                    // Pull the first number out of values like "₹56,100 basic pay"
+                    // or "21-32 years". Rows with no number sort last in either
+                    // direction rather than becoming NaN and freezing the order.
+                    const parse = (text) => {
+                        const match = text.replace(/[,₹]/g, '').match(/-?\d+(\.\d+)?/);
+                        return match ? parseFloat(match[0]) : null;
+                    };
+                    const aValue = parse(aColText);
+                    const bValue = parse(bColText);
+                    if (aValue === null && bValue === null) { return 0; }
+                    if (aValue === null) { return 1; }
+                    if (bValue === null) { return -1; }
+                    return (aValue - bValue) * directionModifier;
+                }
+                return aColText.localeCompare(bColText) * directionModifier;
+            });
+
+            while (tBody.firstChild) { tBody.removeChild(tBody.firstChild); }
+            tBody.append(...sortedRows);
+
+            table.querySelectorAll('th.sortable').forEach(th => { th.classList.remove('sort-asc', 'sort-desc'); });
+            const activeHeader = table.querySelector(`th:nth-child(${columnIndex + 1})`);
+            if (activeHeader) {
+                activeHeader.classList.toggle('sort-asc', ascending);
+                activeHeader.classList.toggle('sort-desc', !ascending);
+            }
+        }
+
+        searchInput.addEventListener('input', () => {
+             const filterText = searchInput.value.toUpperCase();
+             const tableRows = jobsTable.tBodies[0].getElementsByTagName('tr');
+             for (let i = 0; i < tableRows.length; i++) {
+                 const row = tableRows[i]; const rowText = row.textContent || row.innerText;
+                 row.style.display = rowText.toUpperCase().indexOf(filterText) > -1 ? "" : "none";
+             }
+        });
+        searchInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') searchOverlay.classList.remove('visible'); });
+        searchOverlay.addEventListener('click', (event) => { if (event.target === searchOverlay) searchOverlay.classList.remove('visible'); });
+
+        function checkUpdateStatus() {
+            fetch('/update_status?' + Date.now()).then(r => r.json()).then(data => {
+                const isCurrentlyUpdating = data.updating;
+                if (isCurrentlyUpdating && !indicatorContainer.querySelector('.update-indicator')) {
+                    const indicator = document.createElement('span'); indicator.className = 'update-indicator'; indicatorContainer.appendChild(indicator);
+                } else if (!isCurrentlyUpdating) { indicatorContainer.innerHTML = ''; }
+                if (wasUpdating && !isCurrentlyUpdating) { console.log('Update complete.'); setTimeout(() => window.location.reload(), 2000); }
+                wasUpdating = isCurrentlyUpdating;
+            }).catch(e => { if (wasUpdating) setTimeout(() => window.location.reload(), 2000); indicatorContainer.innerHTML = ''; wasUpdating = false; });
+        }
+        setInterval(checkUpdateStatus, 2000); checkUpdateStatus();
+    </script>
+</body>
+</html>
