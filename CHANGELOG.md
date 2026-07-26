@@ -3,6 +3,56 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.0] — 2026-07-27
+
+Frontend release. The dashboard templates were supplied after 1.0.0 and had
+never been committed, along with the server they require. Full analysis in
+[`reports/FRONTEND_AUDIT.md`](reports/FRONTEND_AUDIT.md).
+
+### Fixed
+
+- **JavaScript parse error disabled the entire dashboard.** Four calls in
+  `sortTableByColumn` were written as ``a.querySelector`td:nth-child(${n})`)``
+  — a backtick opening a tagged template plus an unmatched `)`. Confirmed with
+  `node --check`. Because a parse error aborts the whole `<script>` block, this
+  killed sorting, `Ctrl+K` search, arrow-key scrolling, row-click navigation and
+  the status poller. Every interactive feature on the page was dead.
+- **Numeric sorting produced fabricated values.** `replace(/[₹,+-]/g,'')` strips
+  hyphens, so `"21-32 years"` parsed as **2132**, and `"N/A"` became `NaN`,
+  making the comparator non-transitive. Now extracts the first number and sorts
+  unparseable cells last.
+- **Two cards could never show data.** `details.html` reads `application_fee`,
+  `vacancies` and `vacancies_year`; none existed in the schema, so the Fee and
+  Vacancies cards were permanently stuck on their fallback text.
+- `target="_blank"` links had no `rel="noopener noreferrer"`.
+- The website card could render `"Information not available"` as a live link.
+
+### Added
+
+- **`app.py`** — the Flask server the templates required. Routes: `/`,
+  `/details/<int:job_id>`, `/update_status`, `/healthz`. Supplies every variable
+  the templates reference.
+- **`templates/index.html`, `templates/details.html`** — committed for the
+  first time. Visual design preserved byte-for-byte.
+- **Schema v3**: `jobs.application_fee`, `jobs.vacancies`, `jobs.vacancies_year`
+  (nullable, additive), populated with verified 2025 figures and sources.
+- **`scripts/purge_key_from_history.sh`** — tested, verified procedure to remove
+  the leaked key from all git history, with backup, dry-run and per-blob
+  verification.
+- Styled 404/503 error pages; a 503 names `database_setup.py` when the database
+  is missing rather than showing a traceback.
+- `Cache-Control: no-store` on `/update_status`; thread-safe update flag.
+- Refuses `--debug` on a non-loopback host (Werkzeug's console is RCE).
+- 25 web tests (157 total), including a `node --check` assertion on the
+  rendered JavaScript.
+- `web` optional dependency group: `pip install -e ".[web]"`.
+
+### Changed
+
+- `reports/CODE_AUDIT.md` corrected: it claimed no frontend existed. Total
+  findings across both audits: **42**.
+- Both audit reports had quoted the leaked API key verbatim; now masked.
+
 ## [1.0.0] — 2026-07-27
 
 Repair and hardening release. The two original entry points behave the same from

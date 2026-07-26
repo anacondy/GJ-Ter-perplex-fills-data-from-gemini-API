@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 #: Bumped whenever :func:`migrate` learns a new step.
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 JOBS_COLUMNS: tuple[str, ...] = (
     "post_name",
@@ -38,6 +38,9 @@ JOBS_COLUMNS: tuple[str, ...] = (
     "application_end",
     "exam_date",
     "official_website",
+    "application_fee",
+    "vacancies",
+    "vacancies_year",
 )
 
 JOB_SPECS_FIELDS: tuple[str, ...] = (
@@ -117,6 +120,12 @@ _ADDITIVE_COLUMNS: tuple[tuple[str, str, str], ...] = (
     ("jobs", "data_source", "TEXT"),
     ("jobs", "verified_on", "TEXT"),
     ("jobs", "updated_at", "TEXT"),
+    # Referenced by templates/details.html. These were read by the frontend but
+    # never existed in the schema, so the Fee and Vacancies cards could only
+    # ever render their fallback text.
+    ("jobs", "application_fee", "TEXT"),
+    ("jobs", "vacancies", "TEXT"),
+    ("jobs", "vacancies_year", "TEXT"),
     ("job_specs", "data_source", "TEXT"),
     ("job_specs", "source_url", "TEXT"),
     ("job_specs", "updated_at", "TEXT"),

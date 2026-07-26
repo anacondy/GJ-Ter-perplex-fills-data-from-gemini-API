@@ -1,6 +1,6 @@
 # Database Schema
 
-SQLite. Current `user_version`: **2**.
+SQLite. Current `user_version`: **3**.
 
 Legacy columns from the original schema are preserved exactly. Everything added
 is nullable, so a consumer doing `SELECT *` continues to work.
@@ -28,6 +28,9 @@ One row per **post**. The spine of the database.
 | `application_end` | TEXT | ISO date, nullable |
 | `exam_date` | TEXT | ISO date, nullable |
 | `official_website` | TEXT | Validated `http(s)` URL, or NULL. Never a sentinel string. |
+| `application_fee` | TEXT | *added v3* — read by `details.html`; the column did not exist before, so the Fee card could only show its fallback |
+| `vacancies` | TEXT | *added v3* — read by `details.html`, same story |
+| `vacancies_year` | TEXT | *added v3* — the cycle `vacancies` refers to |
 | `source_url` | TEXT | *added* — where the row was verified |
 | `data_source` | TEXT | *added* — `curated-offline`, `gemini` |
 | `verified_on` | TEXT | *added* — ISO date of last human check |
@@ -100,6 +103,20 @@ One row per **post**. The spine of the database.
 | `notes` | TEXT | Human-readable summary |
 
 ---
+
+## Consumers
+
+`app.py` reads this schema directly:
+
+| Route | Reads |
+|---|---|
+| `/` | `jobs` (11 columns for the table) |
+| `/details/<id>` | `jobs`, `job_specs`, `exam_pattern`, `job_cutoffs` |
+| `/healthz` | `coverage()` counts |
+
+Because the templates render `job.<column>` by name, **removing or renaming a
+column silently blanks a cell rather than raising**. Treat the names above as a
+published interface; add, never rename.
 
 ## Migration policy
 

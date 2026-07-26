@@ -13,7 +13,7 @@
 `data_scout.py` line 8, introduced in commit `87315c3` (2025-10-18):
 
 ```python
-API_KEY = "AIzaSyDx5BzjMTff0pHzJAZVDYQE-I9j5RSz3Z8"
+API_KEY = "AIzaSyD****************************Z3Z8  # masked"
 ```
 
 Commit `3f268fc` replaced the literal with `"KEY HERE"`.
@@ -133,6 +133,30 @@ whatever the model had generated, with no provenance.
 
 ---
 
+---
+
+## SEC-7 — Reverse tabnabbing via `target="_blank"`
+
+**Severity: LOW · Status: fixed**
+
+`details.html` opened the official-website link with `target="_blank"` and no
+`rel`. The opened page receives a `window.opener` reference and can navigate the
+dashboard tab elsewhere — e.g. to a credential-harvesting lookalike. Fixed by
+adding `rel="noopener noreferrer"`; a test asserts it stays.
+
+---
+
+## SEC-8 — Debug console exposable to the network
+
+**Severity: MEDIUM · Status: fixed**
+
+Flask's debug mode enables the Werkzeug interactive console, which executes
+arbitrary Python from the browser. Running `--debug` while bound to `0.0.0.0`
+would expose remote code execution to anyone on the network. `app.py` now
+refuses that combination outright.
+
+---
+
 ## Not applicable
 
 Assessed and found not to be issues:
@@ -159,6 +183,8 @@ Assessed and found not to be issues:
 | SEC-4 | Bare exception handlers | Medium | Yes | — |
 | SEC-5 | Foreign keys unenforced | Medium | Yes | — |
 | SEC-6 | No `.gitignore` | Low | Yes | — |
+| SEC-7 | `target="_blank"` without `rel="noopener"` | Low | Yes | — |
+| SEC-8 | Werkzeug debug console could bind to a public interface | Medium | Yes | — |
 
 **One item requires human action: revoke the exposed key.** Everything else is
 resolved in code and covered by tests.

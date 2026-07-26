@@ -32,6 +32,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET; medical standards apply on selection",
         "official_website": "https://upsc.gov.in",
         "source_url": "https://upsc.gov.in/examinations/Civil%20Services%20(Preliminary)%20Examination",
+        "application_fee": "₹100 (Prelims). SC/ST/PwBD and all female candidates exempt. Mains: ₹200.",
+        "vacancies": "979 (CSE 2025, all services combined)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -47,6 +50,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "Physical standards and medical fitness required",
         "official_website": "https://upsc.gov.in",
         "source_url": "https://upsc.gov.in/examinations/Civil%20Services%20(Preliminary)%20Examination",
+        "application_fee": "₹100 (Prelims). SC/ST/PwBD and all female candidates exempt. Mains: ₹200.",
+        "vacancies": "979 (CSE 2025, all services combined)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -62,6 +68,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET; medical standards apply on selection",
         "official_website": "https://upsc.gov.in",
         "source_url": "https://upsc.gov.in/examinations/Civil%20Services%20(Preliminary)%20Examination",
+        "application_fee": "₹100 (Prelims). SC/ST/PwBD and all female candidates exempt. Mains: ₹200.",
+        "vacancies": "979 (CSE 2025, all services combined)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -78,6 +87,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET",
         "official_website": "https://www.rbi.org.in",
         "source_url": "https://opportunities.rbi.org.in",
+        "application_fee": "₹850 + 18% GST (General/OBC/EWS); ₹100 + GST (SC/ST/PwBD)",
+        "vacancies": "120 (2025: General 83, DEPR 17, DSIM 20)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -93,6 +105,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET",
         "official_website": "https://sbi.co.in/web/careers",
         "source_url": "https://sbi.co.in/web/careers/current-openings",
+        "application_fee": "₹750 (General/EWS/OBC); nil for SC/ST/PwBD",
+        "vacancies": "541 (2025-26: 500 regular + 41 backlog)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -108,6 +123,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET",
         "official_website": "https://www.ibps.in",
         "source_url": "https://www.ibps.in/index.php/crp-po-mt/",
+        "application_fee": "₹850 (General/OBC/EWS); ₹175 (SC/ST/PwBD)",
+        "vacancies": None,
+        "vacancies_year": None,
         "verified_on": "2026-07-27",
     },
     {
@@ -125,6 +143,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET for this post",
         "official_website": "https://ssc.gov.in",
         "source_url": "https://ssc.gov.in/candidate-portal/notice-board",
+        "application_fee": "₹100; nil for women, SC, ST, PwBD and eligible ex-servicemen",
+        "vacancies": None,
+        "vacancies_year": None,
         "verified_on": "2026-07-27",
     },
     {
@@ -141,6 +162,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "Physical and medical standards required; SSB includes group tests",
         "official_website": "https://upsc.gov.in",
         "source_url": "https://upsc.gov.in/examinations/National%20Defence%20Academy%20and%20Naval%20Academy%20Examination",
+        "application_fee": "₹100; nil for SC/ST, female candidates and wards of JCOs/NCOs/ORs",
+        "vacancies": "406 (NDA & NA II 2025)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -156,6 +180,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET",
         "official_website": "https://www.isro.gov.in/CareerOpportunities.html",
         "source_url": "https://www.isro.gov.in/CareerOpportunities.html",
+        "application_fee": "₹750 initially; refunded in full to SC/ST/PwBD/women/ex-servicemen and ₹500 refunded to others on appearing (net ₹250)",
+        "vacancies": "320 (ICRB 2025, Advt. ISRO:ICRB:02(EMC):2025)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -171,6 +198,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET",
         "official_website": "https://rac.gov.in",
         "source_url": "https://rac.gov.in",
+        "application_fee": "₹100 (General/OBC/EWS); nil for SC/ST/PwBD and all female candidates",
+        "vacancies": "152 (2025, Advt. No. 156)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -186,6 +216,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "Service-specific physical and medical standards apply",
         "official_website": "https://upsc.gov.in",
         "source_url": "https://upsc.gov.in/examinations/Engineering%20Services%20Examination",
+        "application_fee": "₹200; nil for SC/ST/PwBD and all female candidates",
+        "vacancies": "457 (ESE 2025, including IRMS)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
     {
@@ -201,6 +234,9 @@ SEED_JOBS: tuple[dict, ...] = (
         "pet_status": "No PET; pre-recruitment medical examination applies",
         "official_website": "https://licindia.in/web/guest/careers",
         "source_url": "https://licindia.in/web/guest/careers",
+        "application_fee": "₹700 + GST (General/OBC/EWS); ₹85 + GST (SC/ST/PwBD)",
+        "vacancies": "350 (AAO Generalist, 2025; 841 across all AAO/AE posts)",
+        "vacancies_year": "2025",
         "verified_on": "2026-07-27",
     },
 )

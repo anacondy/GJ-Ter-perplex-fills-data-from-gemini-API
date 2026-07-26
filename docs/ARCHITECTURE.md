@@ -11,7 +11,12 @@ GJ-Ter turns a list of Indian government recruitment exams into a normalised,
                         └──────────────────────┘  │
                         ┌──────────────────────┐  │   ┌──────────────┐
    data_scout.py ──────▶│  gjter.cli  (scout)  │──┼──▶│  gjter.db    │──▶ jobs.db
-                        └──────────┬───────────┘  │   └──────────────┘
+                        └──────────┬───────────┘  │   └──────┬───────┘
+                                   │              │          │ read-only
+                                   │              │   ┌──────▼───────┐
+                                   │              │   │    app.py    │──▶ browser
+                                   │              │   │  Flask + UI  │
+                                   │              │   └──────────────┘
                                    │              │
                                    ▼              │
                         ┌──────────────────────┐  │
@@ -56,6 +61,8 @@ GJ-Ter turns a list of Indian government recruitment exams into a normalised,
 | `gjter/pipeline.py` | Orchestration: batch → fetch → match → write | all of the above |
 | `gjter/seed.py` | The twelve base job rows, with sources | `db` |
 | `gjter/cli.py` | Argument parsing and command handlers | all of the above |
+| `app.py` | Flask server: routes, template context, error pages | `gjter.db`, `gjter.config` |
+| `templates/` | The GJ Terminal UI (Jinja2 + vanilla JS, no build step) | — |
 
 The dependency graph is acyclic and points inward: `cli` → `pipeline` →
 `providers`/`matching`/`validation` → `config` → stdlib.
@@ -126,6 +133,33 @@ The acronym guard is the important one. `"UPSC CSE"` and `"UPSC ESE"` score
 0.875 by pure character similarity — high enough to pass any cutoff loose enough
 to tolerate real-world formatting noise. Requiring `{upsc, cse} ⊆ candidate`
 makes the collision structurally impossible rather than tuned against.
+
+## Web layer
+
+`app.py` is a **read-only** consumer of the database. It never writes, so the
+dashboard can be running while `gjter scout` updates the data underneath it —
+WAL mode allows the concurrent reader.
+
+| Route | Purpose |
+|---|---|
+| `/` | Sortable, searchable table of all posts |
+| `/details/<int:job_id>` | Card grid: specs, pattern, dates, cutoffs, fee, website, vacancies |
+| `/update_status` | JSON `{"updating": bool}`, polled every 2 s by the dashboard |
+| `/healthz` | Liveness plus coverage counts |
+
+A connection is opened and closed **per request**: SQLite connections cannot be
+shared across threads and Flask serves on several.
+
+`_clean()` maps sentinel strings (`"Information not available"`, `"N/A"`, `""`)
+to `None` so the templates' own `or 'N/A'` fallbacks fire instead of printing
+the sentinel into the UI.
+
+### Preserving the UI
+
+The templates are treated as a fixed design. When changing them, only defects
+are in scope — every colour, font, spacing rule, animation and breakpoint is
+load-bearing. See [`../reports/FRONTEND_AUDIT.md`](../reports/FRONTEND_AUDIT.md)
+§6 for exactly what was and was not touched.
 
 ## Extending
 

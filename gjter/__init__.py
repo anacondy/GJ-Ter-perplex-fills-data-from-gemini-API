@@ -8,4 +8,4 @@ concerns live behind :mod:`gjter.providers`, which is imported lazily.
 
 __all__ = ["__version__"]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

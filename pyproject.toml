@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gjter"
-version = "1.0.0"
+version = "1.1.0"
 description = "Build and enrich a sourced SQLite database of Indian government recruitment exams."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -22,7 +22,8 @@ dependencies = []
 
 [project.optional-dependencies]
 gemini = ["google-genai>=1.0.0"]
-dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4"]
+web = ["flask>=3.0"]
+dev = ["pytest>=7.4", "pytest-cov>=4.1", "ruff>=0.4", "flask>=3.0"]
 
 [project.scripts]
 gjter = "gjter.cli:main"

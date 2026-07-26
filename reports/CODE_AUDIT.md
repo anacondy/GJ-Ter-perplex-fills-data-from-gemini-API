@@ -3,7 +3,9 @@
 **Audited commit:** `3f268fc` ("Replace API key with placeholder")
 **Audit date:** 2026-07-27
 **Scope:** the entire repository — `data_scout.py` (145 lines), `database_setup.py` (101 lines), `README.md` (2 lines), `LICENSE`.
-**Auditor's note:** the repository contains **no frontend, no tests, no dependency manifest, no CI and no `.gitignore`.** The whole project is 246 lines of Python.
+**Auditor's note:** the repository as committed contains **no tests, no dependency manifest, no CI and no `.gitignore`.** The whole committed project is 246 lines of Python.
+
+> **Correction (2026-07-27, after this audit was first written):** the project *does* have a frontend — `templates/index.html` and `templates/details.html` — which had simply never been committed, along with the Flask server they require. My original conclusion that "no frontend exists" was wrong, and it was wrong in an important way: the templates read three columns that the schema did not define, and their JavaScript contained a fatal parse error. Both are now covered in [`FRONTEND_AUDIT.md`](FRONTEND_AUDIT.md), and the total finding count rises from 28 to **42**.
 
 ---
 
@@ -15,7 +17,7 @@ The *implementation* does not hold up. Of the two scripts, one destroys the data
 
 The most serious finding is not the leaked API key (bad, but a known quantity). It is that **the pipeline silently writes wrong data into the database and reports success while doing it.** A user running this tool would end up with a database that looks fully populated and is confidently incorrect in ways no error message reveals. For a dataset whose entire purpose is telling people whether they are eligible for a career-defining exam, that is the worst possible failure mode.
 
-**Overall rating: 3.5 / 10.** Detailed scorecard in §6.
+**Overall rating: 3.5 / 10** for the backend; **4 / 10** for the frontend. Detailed scorecards in §6 and in [`FRONTEND_AUDIT.md`](FRONTEND_AUDIT.md) §7.
 
 ---
 
@@ -25,7 +27,7 @@ The most serious finding is not the leaked API key (bad, but a known quantity). 
 `data_scout.py:8` at commit `87315c3` contained:
 
 ```python
-API_KEY = "AIzaSyDx5BzjMTff0pHzJAZVDYQE-I9j5RSz3Z8"
+API_KEY = "AIzaSyD****************************Z3Z8  # masked"
 ```
 
 Commit `3f268fc` replaced it with `"KEY HERE"`. **This does not remediate anything.** The key remains in the object database, is reachable via `git show 87315c3:data_scout.py`, is served by the GitHub API, and has almost certainly been harvested — GitHub is continuously scraped for exactly this pattern, typically within minutes of a push.

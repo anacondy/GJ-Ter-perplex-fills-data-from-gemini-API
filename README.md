@@ -25,6 +25,17 @@ python -m gjter status            # see what you have
 
 That produces a complete, verifiable database using only the standard library.
 
+### Launch the dashboard
+
+```bash
+pip install -e ".[web]"
+python app.py                     # http://127.0.0.1:5000
+```
+
+The **GJ Terminal** dashboard: a sortable, searchable table of every post, with
+a detail page per exam. `Ctrl+K` to search, arrow keys to scroll, click any row
+for details.
+
 ### With the Gemini API
 
 ```bash
@@ -55,6 +66,8 @@ Both original entry points still work; `gjter` is the full interface.
 | `python -m gjter status` | Coverage summary and recent runs. Add `--json`. |
 | `python -m gjter export -o out.json` | Dump everything as nested JSON. |
 | `python -m gjter verify` | Integrity checks; exits non-zero on failure. |
+| `python app.py` | Serve the dashboard on http://127.0.0.1:5000 |
+| `python app.py --port 8000` | Serve on a different port. |
 
 ### Configuration
 
@@ -97,6 +110,7 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 
 ```
 .
+├── app.py                     # Flask server for the dashboard
 ├── data_scout.py              # entry point: enrich  (thin wrapper)
 ├── database_setup.py          # entry point: init    (thin wrapper)
 ├── pyproject.toml             # packaging, deps, pytest and ruff config
@@ -117,12 +131,20 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 │       ├── gemini.py          # live API, retries, backoff
 │       └── offline.py         # curated dataset
 │
-├── tests/                     # 132 tests
+├── templates/                 # the GJ Terminal UI
+│   ├── index.html             # sortable job table
+│   └── details.html           # per-exam card grid
+│
+├── scripts/
+│   └── purge_key_from_history.sh   # remove the leaked key from git history
+│
+├── tests/                     # 157 tests
 │   ├── test_matching.py
 │   ├── test_validation.py
 │   ├── test_db.py
 │   ├── test_pipeline.py
 │   ├── test_gemini_provider.py
+│   ├── test_web.py
 │   └── test_config_and_cli.py
 │
 ├── docs/
@@ -131,7 +153,8 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 │   └── DATA_SOURCES.md
 │
 ├── reports/
-│   ├── CODE_AUDIT.md          # full audit: 28 findings, ratings
+│   ├── CODE_AUDIT.md          # backend audit: 28 findings, ratings
+│   ├── FRONTEND_AUDIT.md      # frontend audit: 14 findings, ratings
 │   └── SECURITY.md            # vulnerabilities and remediation
 │
 ├── CHANGELOG.md
@@ -145,7 +168,7 @@ Full detail in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest                 # 132 tests, no network required
+pytest                 # 157 tests, no network required
 ruff check gjter tests
 ```
 
@@ -173,9 +196,19 @@ guarantee.
 
 This repository previously consisted of two scripts with a live API key in git
 history, a matcher that silently wrote one exam's rules onto another, and a
-setup script that dropped every table on import. Those and 25 other findings are
-documented in [`reports/CODE_AUDIT.md`](reports/CODE_AUDIT.md), each with a
-regression test.
+setup script that dropped every table on import. The dashboard, meanwhile, had a
+JavaScript parse error that disabled every interactive feature on the page, and
+no server to render it at all.
+
+Those and 39 other findings are documented in
+[`reports/CODE_AUDIT.md`](reports/CODE_AUDIT.md) and
+[`reports/FRONTEND_AUDIT.md`](reports/FRONTEND_AUDIT.md), each with a regression
+test.
+
+> **The API key committed at `87315c3` is still in git history.** Run
+> [`scripts/purge_key_from_history.sh`](scripts/purge_key_from_history.sh) to
+> remove it, but **revoke it first** — see
+> [`reports/SECURITY.md`](reports/SECURITY.md).
 
 ## License
 
