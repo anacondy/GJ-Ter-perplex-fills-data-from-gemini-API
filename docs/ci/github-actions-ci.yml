@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check gjter tests
+        continue-on-error: true
+
+      - name: Test
+        run: pytest -q
+
+      - name: End-to-end smoke test (offline, no API key)
+        run: |
+          python database_setup.py
+          python data_scout.py --offline
+          python -m gjter verify
+          python -m gjter status
+
+      - name: Fail if a database was committed
+        run: |
+          if git ls-files --error-unmatch jobs.db 2>/dev/null; then
+            echo "jobs.db must not be committed; it is a build artefact."
+            exit 1
+          fi
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for hardcoded Google API keys
+        run: |
+          if git grep -nE 'AIza[0-9A-Za-z_-]{35}' -- . ':!*.md'; then
+            echo "::error::A Google API key literal is present in the working tree."
+            exit 1
+          fi
+          echo "No API key literals in the working tree."
